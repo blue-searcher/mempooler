@@ -2,6 +2,10 @@
 
 simple devp2p implementation to receive pending ethereum transactions and push them to websocket
 
+run with ```npm run dev```
+
+### ports
+
 websocket server runs on port 60606
 
 port 30303 needs to be open from the outside in order to communicate with other ethereum nodes
