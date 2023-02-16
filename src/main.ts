@@ -19,7 +19,7 @@ const getPeerAddr = (peer: Peer) => `${peer._socket.remoteAddress}:${peer._socke
 
 const wss = new WebSocketServer({ port: 60606 });
 
-let socket: WebSocket;
+let sockets: WebSocket[] = [];
 
 const common = new Common({ chain: Chain.Mainnet, hardfork: Hardfork.Merge })
 const BOOTNODES = common.bootstrapNodes().map((node: any) => {
@@ -54,7 +54,7 @@ rlpx.on('error', (err) => console.error(chalk.red(`RLPx error: ${err.stack ?? er
 
 wss.on('connection', (s: WebSocket) => {
   console.log("New ws connection");
-  socket = s;
+  sockets.push(s);
 });
 
 rlpx.on('peer:added', (peer) => {
@@ -151,15 +151,19 @@ function onNewTx(tx: TypedTransaction, peer: Peer) {
   txCache.set(txHashHex, true)
   console.log(`New tx: ${txHashHex} (from ${getPeerAddr(peer)})`)
 
-  if (socket) {
-    socket.send(JSON.stringify({ 
-      ...tx.toJSON(), 
-      from: tx.getSenderAddress().toString(),
-      txhash: txHashHex 
-    }))
+  if (sockets.length > 0) {
+    for (let socket of sockets) {
+      if (socket) {
+        socket.send(JSON.stringify({ 
+          ...tx.toJSON(), 
+          from: tx.getSenderAddress().toString(),
+          txhash: txHashHex 
+        }))
+      }
+    }
   }
   else {
-    console.log("socket not found")
+    console.log("sockets not found")
   }
 }
 
